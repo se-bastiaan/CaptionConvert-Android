@@ -22,7 +22,7 @@ import java.util.ArrayList;
 
 /**
  * Class that represents the .ASS and .SSA subtitle file format
- * <p/>
+ *
  * <br><br>
  * Copyright (c) 2012 J. David Requejo <br>
  * j[dot]david[dot]requejo[at] Gmail

@@ -33,8 +33,8 @@ public class Style {
     /**
      * Constructor that receives a String with the new styleName and a style to copy
      *
-     * @param styleName
-     * @param style
+     * @param styleName Name for style
+     * @param style Style to copy
      */
     protected Style(String styleName, Style style) {
         this.iD = styleName;
@@ -69,9 +69,9 @@ public class Style {
     /**
      * To get the string containing the hex value to put into color or background color
      *
-     * @param format supported: "name", "&HBBGGRR", "&HAABBGGRR", "decimalCodedBBGGRR", "decimalCodedAABBGGRR"
+     * @param format supported: "name", "HBBGGRR", "HAABBGGRR", "decimalCodedBBGGRR", "decimalCodedAABBGGRR"
      * @param value  RRGGBBAA string
-     * @return
+     * @return RGB
      */
     protected static String getRGBValue(String format, String value) {
         String color = null;

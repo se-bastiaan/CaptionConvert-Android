@@ -15,7 +15,7 @@ buildscript {
 
 def groupId = 'com.github.sv244'
 def artifactId = 'captionconvert-android'
-def version = '1.0.1'
+def version = '1.0.0'
 def localReleaseDest = "${buildDir}/release/${version}"
 
 apply plugin: 'com.android.library'
