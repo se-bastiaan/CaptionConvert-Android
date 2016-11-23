@@ -1,21 +1,20 @@
 /*
- * This file is part of CaptionConvert-Android.
+ * Copyright (C) 2015-2016 Sébastiaan (github.com/se-bastiaan)
  *
- * CaptionConvert-Android is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * CaptionConvert-Android is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with CaptionConvert-Android. If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package com.github.sv244.captionconvert;
+package com.github.se_bastiaan.captionconvert;
 
 import java.util.Hashtable;
 import java.util.TreeMap;
@@ -47,11 +46,6 @@ import java.util.TreeMap;
  */
 public class TimedTextObject {
 
-    /*
-     * Attributes
-     *
-     */
-    //meta info
     public String title = "";
     public String description = "";
     public String copyright = "";
@@ -59,41 +53,25 @@ public class TimedTextObject {
     public String fileName = "";
     public String language = "";
 
-    //list of styles (id, reference)
     public Hashtable<String, Style> styling;
 
-    //list of captions (begin time, reference)
-    //represented by a tree map to maintain order
     public TreeMap<Integer, Caption> captions;
 
-    //to store non fatal errors produced during parsing
     public String warnings;
 
-    //**** OPTIONS *****
-    //to know whether file should be saved as .ASS or .SSA
     public boolean useASSInsteadOfSSA = true;
-    //to delay or advance the subtitles, parsed into +/- milliseconds
-    public int offset = 0;
-
-    //to know if a parsing method has been applied
     public boolean built = false;
-
+    public int offset = 0;
 
     /**
      * Protected constructor so it can't be created from outside
      */
-    protected TimedTextObject() {
-        styling = new Hashtable<String, Style>();
-        captions = new TreeMap<Integer, Caption>();
+    public TimedTextObject() {
+        styling = new Hashtable<>();
+        captions = new TreeMap<>();
 
         warnings = "List of non fatal errors produced during parsing:\n\n";
     }
-
-	
-    /*
-     * Writing Methods
-	 * 
-	 */
 
     /**
      * Method to generate the .SRT file
@@ -123,11 +101,6 @@ public class TimedTextObject {
         return new FormatVTT().toFile(this);
     }
 
-	/* 
-     * PROTECTED METHODS
-	 * 
-	 */
-
     /**
      * This method simply checks the style list and eliminate any style not referenced by any caption
      * This might come useful when default styles get created and cover too much.
@@ -141,7 +114,7 @@ public class TimedTextObject {
             //new caption
             //if it has a style
             if (current.style != null) {
-                String iD = current.style.iD;
+                String iD = current.style.id;
                 //if we haven't saved it yet
                 if (!usedStyles.containsKey(iD))
                     usedStyles.put(iD, current.style);

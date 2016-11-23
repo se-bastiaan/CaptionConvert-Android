@@ -1,28 +1,27 @@
 /*
- * This file is part of CaptionConvert-Android.
+ * Copyright (C) 2015-2016 Sébastiaan (github.com/se-bastiaan)
  *
- * CaptionConvert-Android is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * CaptionConvert-Android is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with CaptionConvert-Android. If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package com.github.sv244.captionconvert;
+package com.github.se_bastiaan.captionconvert;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 /**
  * Class that represents the .ASS and .SSA subtitle file format
- *
+ * <p>
  * <br><br>
  * Copyright (c) 2012 J. David Requejo <br>
  * j[dot]david[dot]requejo[at] Gmail
@@ -48,7 +47,6 @@ import java.util.ArrayList;
 public class FormatASS extends TimedTextFileFormat {
 
     public TimedTextObject parseFile(String fileName, String[] inputString) throws IOException {
-
         TimedTextObject tto = new TimedTextObject();
         tto.fileName = fileName;
 
@@ -83,22 +81,24 @@ public class FormatASS extends TimedTextFileFormat {
                         line = getLine(inputString, stringIndex++).trim();
                         //Each line is scanned for useful info until a new section is detected
                         while (!line.startsWith("[")) {
-                            if (line.startsWith("Title:"))
+                            if (line.startsWith("Title:")) {
                                 //We have found the title
                                 tto.title = line.split(":")[1].trim();
-                            else if (line.startsWith("Original Script:"))
+                            } else if (line.startsWith("Original Script:")) {
                                 //We have found the author
                                 tto.author = line.split(":")[1].trim();
-                            else if (line.startsWith("Script Type:")) {
+                            } else if (line.startsWith("Script Type:")) {
                                 //we have found the version
-                                if (line.split(":")[1].trim().equalsIgnoreCase("v4.00+"))
+                                if (line.split(":")[1].trim().equalsIgnoreCase("v4.00+")) {
                                     isASS = true;
                                     //we check the type to set isASS or to warn if it comes from an older version than the studied specs
-                                else if (!line.split(":")[1].trim().equalsIgnoreCase("v4.00"))
+                                } else if (!line.split(":")[1].trim().equalsIgnoreCase("v4.00")) {
                                     tto.warnings += "Script version is older than 4.00, it may produce parsing errors.";
-                            } else if (line.startsWith("Timer:"))
+                                }
+                            } else if (line.startsWith("Timer:")) {
                                 //We have found the timer
                                 timer = Float.parseFloat(line.split(":")[1].trim().replace(',', '.'));
+                            }
                             //we go to the next line
                             lineCounter++;
                             line = getLine(inputString, stringIndex++).trim();
@@ -135,7 +135,7 @@ public class FormatASS extends TimedTextFileFormat {
                                 //we parse the style
                                 style = parseStyleForASS(line.split(":")[1].trim().split(","), styleFormat, lineCounter, isASS, tto.warnings);
                                 //and save the style
-                                tto.styling.put(style.iD, style);
+                                tto.styling.put(style.id, style);
                             }
                             //next line
                             lineCounter++;
@@ -169,7 +169,7 @@ public class FormatASS extends TimedTextFileFormat {
                                 //we parse the dialogue
                                 caption = parseDialogueForASS(line.split(":", 2)[1].trim().split(",", 10), dialogueFormat, timer, tto);
                                 //and save the caption
-                                int key = caption.start.mseconds;
+                                int key = caption.start.getMilliseconds();
                                 //in case the key is already there, we increase it by a millisecond, since no duplicates are allowed
                                 while (tto.captions.containsKey(key)) key++;
                                 tto.captions.put(key, caption);
@@ -206,10 +206,10 @@ public class FormatASS extends TimedTextFileFormat {
 
 
     public String[] toFile(TimedTextObject tto) {
-
         //first we check if the TimedTextObject had been built, otherwise...
-        if (!tto.built)
+        if (!tto.built) {
             return null;
+        }
 
         //we will write the lines in an ArrayList 
         int index = 0;
@@ -218,49 +218,72 @@ public class FormatASS extends TimedTextFileFormat {
 
         //header is placed
         file.add(index++, "[Script Info]");
+
         //title next
         String title = "Title: ";
-        if (tto.title == null || tto.title.isEmpty())
+        if (tto.title == null || tto.title.isEmpty()) {
             title += tto.fileName;
-        else title += tto.title;
+        } else {
+            title += tto.title;
+        }
         file.add(index++, title);
+
         //author next
         String author = "Original Script: ";
-        if (tto.author == null || tto.author.isEmpty())
+        if (tto.author == null || tto.author.isEmpty()) {
             author += "Unknown";
-        else author += tto.author;
+        } else {
+            author += tto.author;
+        }
+        ;
         file.add(index++, author);
+
         //additional info
-        if (tto.copyright != null && !tto.copyright.isEmpty())
+        if (tto.copyright != null && !tto.copyright.isEmpty()) {
             file.add(index++, "; " + tto.copyright);
-        if (tto.description != null && !tto.description.isEmpty())
+        }
+
+        if (tto.description != null && !tto.description.isEmpty()) {
             file.add(index++, "; " + tto.description);
+        }
+
         file.add(index++, "; Converted by the Online Subtitle Converter developed by J. David Requejo");
-        //mandatory info
-        if (tto.useASSInsteadOfSSA)
+
+        // mandatory info
+        if (tto.useASSInsteadOfSSA) {
             file.add(index++, "Script Type: V4.00+");
-        else file.add(index++, "Script Type: V4.00");
+        } else {
+            file.add(index++, "Script Type: V4.00");
+        }
+
         file.add(index++, "Collisions: Normal");
         file.add(index++, "Timer: 100,0000");
-        if (tto.useASSInsteadOfSSA)
+
+        if (tto.useASSInsteadOfSSA) {
             file.add(index++, "WrapStyle: 1");
+        }
         //an empty line is added
         file.add(index++, "");
 
         //Styles section
-        if (tto.useASSInsteadOfSSA)
+        if (tto.useASSInsteadOfSSA) {
             file.add(index++, "[V4+ Styles]");
-        else file.add(index++, "[V4 Styles]");
-        //define the format
-        if (tto.useASSInsteadOfSSA)
+        } else {
+            file.add(index++, "[V4 Styles]");
+        }
+
+        //Define the format
+        if (tto.useASSInsteadOfSSA) {
             file.add(index++, "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
-        else
+        } else {
             file.add(index++, "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding");
+        }
+
         //Next we iterate over the styles
         for (Style style : tto.styling.values()) {
             String styleLine = "Style: ";
             //name
-            styleLine += style.iD + ",";
+            styleLine += style.id + ",";
             styleLine += style.font + ",";
             styleLine += style.fontSize + ",";
             styleLine += getColorsForASS(tto.useASSInsteadOfSSA, style);
@@ -271,31 +294,37 @@ public class FormatASS extends TimedTextFileFormat {
             //MarginL, MarginR, MarginV
             styleLine += ",0,0,0,";
             //AlphaLevel
-            if (!tto.useASSInsteadOfSSA) styleLine += "0,";
+            if (!tto.useASSInsteadOfSSA) {
+                styleLine += "0,";
+            }
             //Encoding
             styleLine += "0";
 
             //and we add the style definition line
             file.add(index++, styleLine);
         }
+
         //an empty line is added
         file.add(index++, "");
 
         //Events section
         file.add(index++, "[Events]");
+
         //define the format
-        if (tto.useASSInsteadOfSSA)
+        if (tto.useASSInsteadOfSSA) {
             file.add(index++, "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
-        else
+        } else {
             file.add(index++, "Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
+        }
+
         //Next we iterate over the captions
         for (Caption caption : tto.captions.values()) {
             //for each caption
             String line = "Dialogue: 0,";
             //offset is applied
             if (tto.offset != 0) {
-                caption.start.mseconds += tto.offset;
-                caption.end.mseconds += tto.offset;
+                caption.start.setMilliseconds(caption.start.getMilliseconds() + tto.offset);
+                caption.end.setMilliseconds(caption.end.getMilliseconds() + tto.offset);
             }
             //start time
             line += caption.start.getTime("h:mm:ss.cs") + ",";
@@ -303,14 +332,16 @@ public class FormatASS extends TimedTextFileFormat {
             line += caption.end.getTime("h:mm:ss.cs") + ",";
             //offset is undone
             if (tto.offset != 0) {
-                caption.start.mseconds -= tto.offset;
-                caption.end.mseconds -= tto.offset;
+                caption.start.setMilliseconds(caption.start.getMilliseconds() - tto.offset);
+                caption.end.setMilliseconds(caption.end.getMilliseconds() - tto.offset);
             }
             //style
-            if (caption.style != null)
-                line += caption.style.iD;
-            else
+            if (caption.style != null) {
+                line += caption.style.id;
+            } else {
                 line += "Default";
+            }
+
             //default margins are used, no name or effect is recognized
             line += ",,0000,0000,0000,,";
 
@@ -319,8 +350,9 @@ public class FormatASS extends TimedTextFileFormat {
             //and we add the caption line
             file.add(index++, line);
         }
+
         //an empty line is added
-        file.add(index++, "");
+        file.add(index, "");
 
         //we return the expected file as an array of String
         String[] toReturn = new String[file.size()];
@@ -330,8 +362,6 @@ public class FormatASS extends TimedTextFileFormat {
         return toReturn;
     }
 
-	/* PRIVATEMETHODS */
-
     /**
      * This methods transforms a format line from ASS according to a format definition into an Style object.
      *
@@ -340,8 +370,8 @@ public class FormatASS extends TimedTextFileFormat {
      * @return a new Style object.
      */
     private Style parseStyleForASS(String[] line, String[] styleFormat, int index, boolean isASS, String warnings) {
-
         Style newStyle = new Style(Style.defaultID());
+
         if (line.length != styleFormat.length) {
             //both should have the same size
             warnings += "incorrectly formated line at " + index + "\n\n";
@@ -350,7 +380,7 @@ public class FormatASS extends TimedTextFileFormat {
                 //we go through every format parameter and save the interesting values
                 if (styleFormat[i].trim().equalsIgnoreCase("Name")) {
                     //we save the name
-                    newStyle.iD = line[i].trim();
+                    newStyle.id = line[i].trim();
                 } else if (styleFormat[i].trim().equalsIgnoreCase("Fontname")) {
                     //we save the font
                     newStyle.font = line[i].trim();
@@ -361,27 +391,33 @@ public class FormatASS extends TimedTextFileFormat {
                     //we save the color
                     String color = line[i].trim();
                     if (isASS) {
-                        if (color.startsWith("&H"))
+                        if (color.startsWith("&H")) {
                             newStyle.color = Style.getRGBValue("&HAABBGGRR", color);
-                        else newStyle.color = Style.getRGBValue("decimalCodedAABBGGRR", color);
+                        } else {
+                            newStyle.color = Style.getRGBValue("decimalCodedAABBGGRR", color);
+                        }
                     } else {
-                        if (color.startsWith("&H"))
+                        if (color.startsWith("&H")) {
                             newStyle.color = Style.getRGBValue("&HBBGGRR", color);
-                        else newStyle.color = Style.getRGBValue("decimalCodedBBGGRR", color);
+                        } else {
+                            newStyle.color = Style.getRGBValue("decimalCodedBBGGRR", color);
+                        }
                     }
                 } else if (styleFormat[i].trim().equalsIgnoreCase("BackColour")) {
                     //we save the background color
                     String color = line[i].trim();
                     if (isASS) {
-                        if (color.startsWith("&H"))
+                        if (color.startsWith("&H")) {
                             newStyle.backgroundColor = Style.getRGBValue("&HAABBGGRR", color);
-                        else
+                        } else {
                             newStyle.backgroundColor = Style.getRGBValue("decimalCodedAABBGGRR", color);
+                        }
                     } else {
-                        if (color.startsWith("&H"))
+                        if (color.startsWith("&H")) {
                             newStyle.backgroundColor = Style.getRGBValue("&HBBGGRR", color);
-                        else
+                        } else {
                             newStyle.backgroundColor = Style.getRGBValue("decimalCodedBBGGRR", color);
+                        }
                     }
                 } else if (styleFormat[i].trim().equalsIgnoreCase("Bold")) {
                     //we save if bold
@@ -477,7 +513,6 @@ public class FormatASS extends TimedTextFileFormat {
      * @return a new Caption object
      */
     private Caption parseDialogueForASS(String[] line, String[] dialogueFormat, float timer, TimedTextObject tto) {
-
         Caption newCaption = new Caption();
 
         //all information from fields 10 onwards are the caption text therefore needn't be split
@@ -490,10 +525,11 @@ public class FormatASS extends TimedTextFileFormat {
             if (dialogueFormat[i].trim().equalsIgnoreCase("Style")) {
                 //we save the style
                 Style s = tto.styling.get(line[i].trim());
-                if (s != null)
+                if (s != null) {
                     newCaption.style = s;
-                else
+                } else {
                     tto.warnings += "undefined style: " + line[i].trim() + "\n\n";
+                }
             } else if (dialogueFormat[i].trim().equalsIgnoreCase("Start")) {
                 //we save the starting time
                 newCaption.start = new Time("h:mm:ss.cs", line[i].trim());
@@ -505,8 +541,8 @@ public class FormatASS extends TimedTextFileFormat {
 
         //timer is applied
         if (timer != 100) {
-            newCaption.start.mseconds /= (timer / 100);
-            newCaption.end.mseconds /= (timer / 100);
+            newCaption.start.setMilliseconds((int) (newCaption.start.getMilliseconds() / (timer / 100)));
+            newCaption.end.setMilliseconds((int) (newCaption.end.getMilliseconds() / (timer / 100)));
         }
         return newCaption;
     }
@@ -519,10 +555,10 @@ public class FormatASS extends TimedTextFileFormat {
      */
     private String getColorsForASS(boolean useASSInsteadOfSSA, Style style) {
         String colors;
-        if (useASSInsteadOfSSA)
+        if (useASSInsteadOfSSA) {
             //primary color(BBGGRR) with Alpha level (00) in front + 00FFFFFF + 00000000 + background color(BBGGRR) with Alpha level (80) in front
             colors = Integer.parseInt("00" + style.color.substring(4, 6) + style.color.substring(2, 4) + style.color.substring(0, 2), 16) + ",16777215,0," + Long.parseLong("80" + style.backgroundColor.substring(4, 6) + style.backgroundColor.substring(2, 4) + style.backgroundColor.substring(0, 2), 16) + ",";
-        else {
+        } else {
             //primary color(BBGGRR) + FFFFFF + 000000 + background color(BBGGRR)
             String color = style.color.substring(4, 6) + style.color.substring(2, 4) + style.color.substring(0, 2);
             String bgcolor = style.backgroundColor.substring(4, 6) + style.backgroundColor.substring(2, 4) + style.backgroundColor.substring(0, 2);
@@ -540,21 +576,28 @@ public class FormatASS extends TimedTextFileFormat {
      */
     private String getOptionsForASS(boolean useASSInsteadOfSSA, Style style) {
         String options;
-        if (style.bold)
+
+        if (style.bold) {
             options = "-1,";
-        else
+        } else {
             options = "0,";
-        if (style.italic)
+        }
+
+        if (style.italic) {
             options += "-1,";
-        else
+        } else {
             options += "0,";
+        }
+
         if (useASSInsteadOfSSA) {
-            if (style.underline)
+            if (style.underline) {
                 options += "-1,";
-            else
+            } else {
                 options += "0,";
+            }
             options += "0,100,100,0,0,";
         }
+
         return options;
     }
 
@@ -568,47 +611,50 @@ public class FormatASS extends TimedTextFileFormat {
     private int getAlignForASS(boolean useASSInsteadOfSSA, String align) {
         if (useASSInsteadOfSSA) {
             int placement = 2;
-            if ("bottom-left".equals(align))
+
+            if ("bottom-left".equals(align)) {
                 placement = 1;
-            else if ("bottom-center".equals(align))
+            } else if ("bottom-center".equals(align)) {
                 placement = 2;
-            else if ("bottom-right".equals(align))
+            } else if ("bottom-right".equals(align)) {
                 placement = 3;
-            else if ("mid-left".equals(align))
+            } else if ("mid-left".equals(align)) {
                 placement = 4;
-            else if ("mid-center".equals(align))
+            } else if ("mid-center".equals(align)) {
                 placement = 5;
-            else if ("mid-right".equals(align))
+            } else if ("mid-right".equals(align)) {
                 placement = 6;
-            else if ("top-left".equals(align))
+            } else if ("top-left".equals(align)) {
                 placement = 7;
-            else if ("top-center".equals(align))
+            } else if ("top-center".equals(align)) {
                 placement = 8;
-            else if ("top-right".equals(align))
+            } else if ("top-right".equals(align)) {
                 placement = 9;
+            }
 
             return placement;
         } else {
-
             int placement = 10;
-            if ("bottom-left".equals(align))
+
+            if ("bottom-left".equals(align)) {
                 placement = 9;
-            else if ("bottom-center".equals(align))
+            } else if ("bottom-center".equals(align)) {
                 placement = 10;
-            else if ("bottom-right".equals(align))
+            } else if ("bottom-right".equals(align)) {
                 placement = 11;
-            else if ("mid-left".equals(align))
+            } else if ("mid-left".equals(align)) {
                 placement = 1;
-            else if ("mid-center".equals(align))
+            } else if ("mid-center".equals(align)) {
                 placement = 2;
-            else if ("mid-right".equals(align))
+            } else if ("mid-right".equals(align)) {
                 placement = 3;
-            else if ("top-left".equals(align))
+            } else if ("top-left".equals(align)) {
                 placement = 5;
-            else if ("top-center".equals(align))
+            } else if ("top-center".equals(align)) {
                 placement = 6;
-            else if ("top-right".equals(align))
+            } else if ("top-right".equals(align)) {
                 placement = 7;
+            }
 
             return placement;
         }

@@ -1,4 +1,20 @@
-package com.github.sv244.captionconvert;
+/*
+ * Copyright (C) 2015-2016 Sébastiaan (github.com/se-bastiaan)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.github.se_bastiaan.captionconvert;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -42,7 +58,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class FormatTTML extends TimedTextFileFormat {
 
 
-    public TimedTextObject parseFile(String fileName, String[] inputString) throws IOException, FatalParsingException {
+    public TimedTextObject parseFile(String fileName, String[] inputString) throws IOException, ParsingException {
 
         TimedTextObject tto = new TimedTextObject();
         tto.fileName = fileName;
@@ -77,16 +93,16 @@ public class FormatTTML extends TimedTextFileFormat {
                 //we get the id
                 Node currentAtr = attr.getNamedItem("id");
                 if (currentAtr != null)
-                    style.iD = currentAtr.getNodeValue();
+                    style.id = currentAtr.getNodeValue();
                 currentAtr = attr.getNamedItem("xml:id");
                 if (currentAtr != null)
-                    style.iD = currentAtr.getNodeValue();
+                    style.id = currentAtr.getNodeValue();
 
                 //we get the style it may be based upon
                 currentAtr = attr.getNamedItem("style");
                 if (currentAtr != null)
                     if (tto.styling.containsKey(currentAtr.getNodeValue()))
-                        style = new Style(style.iD, tto.styling.get(currentAtr.getNodeValue()));
+                        style = new Style(style.id, tto.styling.get(currentAtr.getNodeValue()));
 
                 //we check for background color
                 currentAtr = attr.getNamedItem("tts:backgroundColor");
@@ -164,7 +180,7 @@ public class FormatTTML extends TimedTextFileFormat {
                         style.underline = false;
 
                 //we add the style
-                tto.styling.put(style.iD, style);
+                tto.styling.put(style.id, style);
             }
 
             //we parse the captions
@@ -181,16 +197,16 @@ public class FormatTTML extends TimedTextFileFormat {
                 caption.start = new Time("", "");
                 caption.end = new Time("", "");
                 if (currentAtr != null)
-                    caption.start.mseconds = parseTimeExpression(currentAtr.getNodeValue(), tto, doc);
+                    caption.start.setMilliseconds(parseTimeExpression(currentAtr.getNodeValue(), tto, doc));
 
                 //we get the end time, if present, duration is ignored, otherwise end is calculated from duration
                 currentAtr = attr.getNamedItem("end");
                 if (currentAtr != null)
-                    caption.end.mseconds = parseTimeExpression(currentAtr.getNodeValue(), tto, doc);
+                    caption.end.setMilliseconds(parseTimeExpression(currentAtr.getNodeValue(), tto, doc));
                 else {
                     currentAtr = attr.getNamedItem("dur");
                     if (currentAtr != null)
-                        caption.end.mseconds = caption.start.mseconds + parseTimeExpression(currentAtr.getNodeValue(), tto, doc);
+                        caption.end.setMilliseconds(caption.start.getMilliseconds() + parseTimeExpression(currentAtr.getNodeValue(), tto, doc));
                     else
                         //no end or duration, invalid format, caption is discarded
                         validCaption = false;
@@ -210,10 +226,11 @@ public class FormatTTML extends TimedTextFileFormat {
                 //we save the text
                 NodeList textN = node.getChildNodes();
                 for (int j = 0; j < textN.getLength(); j++) {
-                    if (textN.item(j).getNodeName().equals("#text"))
+                    if (textN.item(j).getNodeName().equals("#text")) {
                         caption.content += textN.item(j).getTextContent().trim();
-                    else if (textN.item(j).getNodeName().equals("br"))
+                    } else if (textN.item(j).getNodeName().equals("br")) {
                         caption.content += "<br />";
+                    }
 
                 }
                 //is this check worth it?
@@ -222,19 +239,17 @@ public class FormatTTML extends TimedTextFileFormat {
 
                 //and save the caption
                 if (validCaption) {
-                    int key = caption.start.mseconds;
+                    int key = caption.start.getMilliseconds();
                     //in case the key is already there, we increase it by a millisecond, since no duplicates are allowed
                     while (tto.captions.containsKey(key)) key++;
                     tto.captions.put(key, caption);
                 }
 
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
             //this could be a fatal error...
-            throw new FatalParsingException("Error during parsing: " + e.getMessage());
+            throw new ParsingException("Error during parsing: " + e.getMessage());
         }
 
 
@@ -242,9 +257,7 @@ public class FormatTTML extends TimedTextFileFormat {
         return tto;
     }
 
-
     public String[] toFile(TimedTextObject tto) {
-
         //first we check if the TimedTextObject had been built, otherwise...
         if (!tto.built)
             return null;
@@ -256,27 +269,40 @@ public class FormatTTML extends TimedTextFileFormat {
 
         //identification line is placed
         file.add(index++, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+
         //root element is placed
         file.add(index++, "<tt xml:lang=\"" + tto.language + "\" xmlns=\"http://www.w3.org/ns/ttml\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">");
+
         //head
         file.add(index++, "\t<head>");
+
         //metadata
         file.add(index++, "\t\t<metadata xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\">");
+
         //title
         String title;
-        if (tto.title == null || tto.title.isEmpty())
+        if (tto.title == null || tto.title.isEmpty()) {
             title = tto.fileName;
-        else title = tto.title;
+        } else {
+            title = tto.title;
+        }
         file.add(index++, "\t\t\t<ttm:title>" + title + "</ttm:title>");
+
         //Copyright
-        if (tto.copyright != null && !tto.copyright.isEmpty())
+        if (tto.copyright != null && !tto.copyright.isEmpty()) {
             file.add(index++, "\t\t\t<ttm:copyright>" + tto.copyright + "</ttm:copyright>");
+        }
+
         //additional info
         String desc = "Converted by the Online Subtitle Converter developed by J. David Requejo\n";
-        if (tto.author != null && !tto.author.isEmpty())
+        if (tto.author != null && !tto.author.isEmpty()) {
             desc += "\n Original file by: " + tto.author + "\n";
-        if (tto.description != null && !tto.description.isEmpty())
+        }
+
+        if (tto.description != null && !tto.description.isEmpty()) {
             desc += tto.description + "\n";
+        }
+
         file.add(index++, "\t\t\t<ttm:desc>" + desc + "\t\t\t</ttm:desc>");
 
         //metadata closes
@@ -285,32 +311,48 @@ public class FormatTTML extends TimedTextFileFormat {
         file.add(index++, "\t\t<styling>");
 
         String line;
+
         //Next we iterate over the styles
         Iterator<Style> itrS = tto.styling.values().iterator();
         while (itrS.hasNext()) {
             Style style = itrS.next();
+
             //we add the attributes
-            line = "\t\t\t<style xml:id=\"" + style.iD + "\"";
-            if (style.color != null)
+            line = "\t\t\t<style xml:id=\"" + style.id + "\"";
+
+            if (style.color != null) {
                 line += " tts:color=\"#" + style.color + "\"";
-            if (style.backgroundColor != null)
+            }
+            if (style.backgroundColor != null) {
                 line += " tts:backgroundColor=\"#" + style.backgroundColor + "\"";
-            if (style.font != null)
+            }
+            if (style.font != null) {
                 line += " tts:fontFamily=\"" + style.font + "\"";
-            if (style.fontSize != null)
+            }
+            if (style.fontSize != null) {
                 line += " tts:fontSize=\"" + style.fontSize + "\"";
-            if (style.italic)
+            }
+            if (style.italic) {
                 line += " tts:fontStyle=\"italic\"";
-            if (style.bold)
+            }
+            if (style.bold) {
                 line += " tts:fontWeight=\"bold\"";
+            }
+
             line += " tts:textAlign=\"";
-            if (style.textAlign.contains("left"))
+
+            if (style.textAlign.contains("left")) {
                 line += "left\"";
-            else if (style.textAlign.contains("right"))
+            } else if (style.textAlign.contains("right")) {
                 line += "rigth\"";
-            else line += "center\"";
-            if (style.underline)
+            } else {
+                line += "center\"";
+            }
+
+            if (style.underline) {
                 line += " tts:textDecoration=\"underline\"";
+            }
+
             //style is ready, we close it.
             line += " />";
             //we insert it
@@ -334,8 +376,9 @@ public class FormatTTML extends TimedTextFileFormat {
             //we open the subtitle line
             line = "\t\t\t<p begin=\"" + caption.start.getTime("hh:mm:ss,ms").replace(',', '.') + "\"";
             line += " end=\"" + caption.end.getTime("hh:mm:ss,ms").replace(',', '.') + "\"";
-            if (caption.style != null)
-                line += " style=\"" + caption.style.iD + "\"";
+            if (caption.style != null) {
+                line += " style=\"" + caption.style.id + "\"";
+            }
             //attributes are done being inserted, if region was implemented it should be added before this.
             line += " >" + caption.content + "</p>\n";
             //we write the line
@@ -372,11 +415,11 @@ public class FormatTTML extends TimedTextFileFormat {
         String value = "";
         String[] values;
         if (color.startsWith("#")) {
-            if (color.length() == 7)
+            if (color.length() == 7) {
                 value = color.substring(1) + "ff";
-            else if (color.length() == 9)
+            } else if (color.length() == 9) {
                 value = color.substring(1);
-            else {
+            } else {
                 //unrecognized format
                 value = "ffffffff";
                 tto.warnings += "Unrecoginzed format: " + color + "\n\n";
@@ -384,8 +427,9 @@ public class FormatTTML extends TimedTextFileFormat {
 
         } else if (color.startsWith("rgb")) {
             boolean alpha = false;
-            if (color.startsWith("rgba"))
+            if (color.startsWith("rgba")) {
                 alpha = true;
+            }
             try {
                 values = color.split("\\(")[1].split(",");
                 int r, g, b, a = 255;
@@ -397,17 +441,20 @@ public class FormatTTML extends TimedTextFileFormat {
                 values[0] = Integer.toHexString(r);
                 values[1] = Integer.toHexString(g);
                 values[2] = Integer.toHexString(b);
-                if (alpha) values[2] = Integer.toHexString(a);
+                if (alpha) {
+                    values[2] = Integer.toHexString(a);
+                }
 
                 for (int i = 0; i < values.length; i++) {
-                    if (values[i].length() < 2)
+                    if (values[i].length() < 2) {
                         values[i] = "0" + values[i];
+                    }
                     value += values[i];
                 }
 
-                if (!alpha)
+                if (!alpha) {
                     value += "ff";
-
+                }
             } catch (Exception e) {
                 value = "ffffffff";
                 tto.warnings += "Unrecoginzed color: " + color + "\n\n";
@@ -434,7 +481,7 @@ public class FormatTTML extends TimedTextFileFormat {
      * @return
      */
     private int parseTimeExpression(String timeExpression, TimedTextObject tto, Document doc) {
-        int mSeconds = 0;
+        int seconds = 0;
         if (timeExpression.contains(":")) {
             //it is a clock time
             String[] parts = timeExpression.split(":");
@@ -445,7 +492,7 @@ public class FormatTTML extends TimedTextFileFormat {
                 h = Integer.parseInt(parts[0]);
                 m = Integer.parseInt(parts[1]);
                 s = Float.parseFloat(parts[2]);
-                mSeconds = h * 3600000 + m * 60000 + (int) (s * 1000);
+                seconds = h * 3600000 + m * 60000 + (int) (s * 1000);
             } else if (parts.length == 4) {
                 //we have h:m:s:f.fraction
                 int h, m, s;
@@ -466,7 +513,7 @@ public class FormatTTML extends TimedTextFileFormat {
                 m = Integer.parseInt(parts[1]);
                 s = Integer.parseInt(parts[2]);
                 f = Float.parseFloat(parts[3]);
-                mSeconds = h * 3600000 + m * 60000 + s * 1000 + (int) (f * 1000 / frameRate);
+                seconds = h * 3600000 + m * 60000 + s * 1000 + (int) (f * 1000 / frameRate);
             } else {
                 //unrecognized  clock time format
             }
@@ -478,19 +525,16 @@ public class FormatTTML extends TimedTextFileFormat {
             double time;
             try {
                 time = Double.parseDouble(timeExpression);
-                if (metric.equalsIgnoreCase("h"))
-                    mSeconds = (int) (time * 3600000);
 
-                else if (metric.equalsIgnoreCase("m"))
-                    mSeconds = (int) (time * 60000);
-
-                else if (metric.equalsIgnoreCase("s"))
-                    mSeconds = (int) (time * 1000);
-
-                else if (metric.equalsIgnoreCase("ms"))
-                    mSeconds = (int) time;
-
-                else if (metric.equalsIgnoreCase("f")) {
+                if (metric.equalsIgnoreCase("h")) {
+                    seconds = (int) (time * 3600000);
+                } else if (metric.equalsIgnoreCase("m")) {
+                    seconds = (int) (time * 60000);
+                } else if (metric.equalsIgnoreCase("s")) {
+                    seconds = (int) (time * 1000);
+                } else if (metric.equalsIgnoreCase("ms")) {
+                    seconds = (int) time;
+                } else if (metric.equalsIgnoreCase("f")) {
                     int frameRate;
                     //we recover the frame rate
                     Node n = doc.getElementsByTagName("ttp:frameRate").item(0);
@@ -498,9 +542,8 @@ public class FormatTTML extends TimedTextFileFormat {
                         //used as auxiliary string
                         String s = n.getNodeValue();
                         frameRate = Integer.parseInt(s);
-                        mSeconds = (int) (time * 1000 / frameRate);
+                        seconds = (int) (time * 1000 / frameRate);
                     }
-
                 } else if (metric.equalsIgnoreCase("t")) {
                     int tickRate;
                     //we recover the tick rate
@@ -509,20 +552,17 @@ public class FormatTTML extends TimedTextFileFormat {
                         //used as auxiliary string
                         String s = n.getNodeValue();
                         tickRate = Integer.parseInt(s);
-                        mSeconds = (int) (time * 1000 / tickRate);
+                        seconds = (int) (time * 1000 / tickRate);
                     }
-
-
                 } else {
                     //invalid metric
-
                 }
             } catch (NumberFormatException e) {
                 //incorrect format for offset time
             }
         }
 
-        return mSeconds;
+        return seconds;
     }
 
 }

@@ -1,27 +1,26 @@
 /*
- * This file is part of CaptionConvert-Android.
+ * Copyright (C) 2015-2016 Sébastiaan (github.com/se-bastiaan)
  *
- * CaptionConvert-Android is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * CaptionConvert-Android is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with CaptionConvert-Android. If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package com.github.sv244.captionconvert;
+package com.github.se_bastiaan.captionconvert;
 
 import java.io.IOException;
 
 /**
  * This class specifies the interface for any format supported by the converter, these formats must
- * create a {@link com.github.sv244.captionconvert.TimedTextObject} from an {@link java.io.InputStream} (so it can process files form standard In or uploads)
+ * create a {@link com.github.se_bastiaan.captionconvert.TimedTextObject} from an {@link java.io.InputStream} (so it can process files form standard In or uploads)
  * and return a String array for text formats, or byte array for binary formats.
  * <br><br>
  * Copyright (c) 2012 J. David Requejo <br>
@@ -54,11 +53,11 @@ public abstract class TimedTextFileFormat {
      * @param inputString Input string containing subtitle text
      * @return TimedTextObject representing the parsed file
      * @throws java.io.IOException when having trouble reading the file from the given path
-     * @throws FatalParsingException when parsing failed
+     * @throws ParsingException when parsing failed
      */
-    public abstract TimedTextObject parseFile(String fileName, String[] inputString) throws IOException, FatalParsingException;
+    public abstract TimedTextObject parseFile(String fileName, String[] inputString) throws IOException, ParsingException;
 
-    public TimedTextObject parseFile(String fileName, String inputString) throws IOException, FatalParsingException {
+    public TimedTextObject parseFile(String fileName, String inputString) throws IOException, ParsingException {
         return parseFile(fileName, inputString.split("\n|\r\n"));
     }
 
